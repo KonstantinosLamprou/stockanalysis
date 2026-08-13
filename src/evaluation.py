@@ -23,23 +23,21 @@ def evaluate_model_performance(y_test, predictions):
     return mae, mse, r2
 
 
-def plot_predictions(y_test, predictions):
-    plt.figure(figsize=(8, 6))
+def plot_predictions(dates, y_test, predictions):
+    plt.figure(figsize=(12, 8))
 
-    # Die Punkte plotten: X-Achse = Echte Werte, Y-Achse = Vorhersagen
-    plt.scatter(y_test, predictions, alpha=0.5, color='blue', label='Vorhersagen')
+    plt.plot(dates, y_test.values, color='blue', label='Tatsächliche Werte')
+    
+    plt.plot(dates, predictions, color='orange', linestyle='--', label='Vorhersagen')
 
-    # Eine ideale diagonale Linie einzeichnen (Perfektes Modell)
-    max_val = max(max(y_test), max(predictions))
-    min_val = min(min(y_test), min(predictions))
-    plt.plot([min_val, max_val], [min_val, max_val], color='red', linestyle='--', label='Perfekte Vorhersage')
-
-    # Plot strukturieren
-    plt.xlabel('Tatsächliche Werte (y_test)')
-    plt.ylabel('Vorhersagen (predictions)')
-    plt.title('Modell-Auswertung: Realität vs. Vorhersage')
+    plt.xlabel('Datum')
+    plt.ylabel('Aktienkurs in $')
+    plt.title('GOOGL Aktienkurs: Realität vs. Vorhersage')
     plt.legend()
     plt.grid(True)
+    
+    # dreht die Datums-Texte auf der X-Achse leicht schräg, 
+    # damit sie sich nicht überlappen, wenn es viele Tage sind
+    plt.gcf().autofmt_xdate()
 
-    # Graph anzeigen
     plt.show()

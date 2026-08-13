@@ -2,13 +2,13 @@ import yfinance as yf
 import pandas as pd
 from pathlib import Path
 
-def load_stock_data(ticker_symbol: str, period: str = "6m") -> pd.DataFrame:
+def load_stock_data(ticker_symbol: str, period: str = "6mo") -> pd.DataFrame:
     """
     Lädt historische Aktienkursdaten und speichert sie als CSV.
     
     Args:
         ticker_symbol (str): Das Ticker-Symbol (z.B. "GOOGL").
-        period (str): Zeitraum (Standard: "6m").
+        period (str): Zeitraum (Standard: "6mo").
     
     Returns:
         pd.DataFrame: Die geladenen Daten.
@@ -30,7 +30,7 @@ def load_stock_data(ticker_symbol: str, period: str = "6m") -> pd.DataFrame:
     filename = data_dir / f"{ticker_symbol}_raw_data.csv"
     
     # Speichern
-    df.to_csv(filename, index=False)
+    df.to_csv(filename)
     print(f"Daten gespeichert unter: {filename}")
     
     return df

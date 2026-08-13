@@ -16,13 +16,13 @@ def main():
     train_data, test_data = pp.split_data(df_clean)
 
     # Modelltraining und -bewertung können hier hinzugefügt werden
-    model = mb.train_linear_regression_model(train_data[['Close']], train_data['Close'])
+    model = mb.train_linear_regression_model(train_data[['Close']], train_data['Target'])
 
     predictions = ev.evaluate_model(model, test_data[['Close']])
 
-    ev.evaluate_model_performance(test_data['Close'], predictions)
+    # ev.evaluate_model_performance(test_data['Target'], predictions)
     
-    ev.plot_predictions(test_data['Close'], predictions)
+    ev.plot_predictions(test_data.index, test_data['Target'], predictions)
   
 if __name__ == "__main__":
     main()
