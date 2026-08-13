@@ -23,6 +23,6 @@ def main():
     ev.evaluate_model_performance(test_data['Close'], predictions)
     
     ev.plot_predictions(test_data['Close'], predictions)
-
+  
 if __name__ == "__main__":
     main()
