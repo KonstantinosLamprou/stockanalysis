@@ -1,5 +1,5 @@
 
 data/
 .env 
-model-evaluation.txt
-todos.txt
+docs/model-evaluation.txt
+docs/todos.txt
