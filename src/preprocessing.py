@@ -5,12 +5,12 @@ def clean_data(df: pd.DataFrame, ticker_symbol: str):
     if df.empty:
         raise ValueError("Der DataFrame ist leer. Bitte überprüfen Sie die Datenquelle.")
 
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.droplevel(1)
+        
     # Bereinigung
-    df_clean = df[['Close']].copy().dropna()
+    df_clean = df[['Close', 'Volume']].copy().dropna()
 
-    # shift(-1) verschiebt die Daten um eine Zeile nach oben
-    # df['Target'] = df['Close'].diff().shift(-1) / ein Weg die differenz zu berechnen
-    df_clean['Target'] = df_clean['Close'].shift(-1)
 
     data_dir = Path("../data/processed")
     data_dir.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,23 @@
+Gradient Boosting Modell
+=== Modell-Evaluation ===
+MAE (Mittlerer absoluter Fehler): 6.08 $
+RMSE (Wurzel der mittleren Fehlerquadrate): 8.22 $
+R^2 Score (Bestimmtheitsmaß): -0.19
+Trefferquote (Directional Accuracy): 49.65 %
+=========================
+
+Random Forest Modell
+=== Modell-Evaluation ===
+MAE (Mittlerer absoluter Fehler): 5.55 $
+RMSE (Wurzel der mittleren Fehlerquadrate): 7.69 $
+R^2 Score (Bestimmtheitsmaß): -0.04
+Trefferquote (Directional Accuracy): 48.94 %
+=========================
+
+Lineare Regression
+=== Modell-Evaluation ===
+MAE (Mittlerer absoluter Fehler): 5.47 $
+RMSE (Wurzel der mittleren Fehlerquadrate): 7.61 $
+R^2 Score (Bestimmtheitsmaß): -0.02
+Trefferquote (Directional Accuracy): 46.10 %
+=========================

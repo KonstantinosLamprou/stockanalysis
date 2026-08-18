@@ -2,7 +2,7 @@ import yfinance as yf
 import pandas as pd
 from pathlib import Path
 
-def load_stock_data(ticker_symbol: str, period: str = "6mo") -> pd.DataFrame:
+def load_stock_data(ticker_symbol: str, period: str = "3y") -> pd.DataFrame:
     """
     Lädt historische Aktienkursdaten und speichert sie als CSV.
     

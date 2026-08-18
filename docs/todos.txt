@@ -1,0 +1,15 @@
+
+- data leakage hier auch noch dokumentieren mit screens 
+- clean_data neumachen 
+- data leakage klären 
+- alle Modelle trainieren und in die Ergebnisse dokumentieren 
+
+Ich brauche mehr Daten und Spalten tatsächlich, damit die Modelle besser werden. 
+in Feature Engineering: 
+Lags (Verzögerungen): Die Rendite von gestern, vorgestern und vor drei Tagen als separate Spalten.
+Gleitende Durchschnitte (SMA / EMA): Z. B. der 10-Tage- und 50-Tage-Durchschnitt des Adj Close.
+Volatilität: Die Standardabweichung der Renditen der letzten 20 Tage.
+Momentum: Indikatoren wie der RSI (Relative Strength Index), die du aus den yfinance-Daten berechnen kannst (dafür gibt es Python-Bibliotheken wie ta oder pandas-ta).
+
+Extras: 
+Validierung mit asserts wie bei Unit-Tests um Data leakage zu vermeiden
