@@ -30,7 +30,7 @@ OUT = Path(__file__).resolve().parent / "Aktienanalyse_Praesentation.pptx"
 BG, INK, MUTED, LINE = "F7F6F2", "1A1A19", "6B6A66", "D9D7CF"
 ACCENT = "EB6834"
 SERIF, MONO = "Georgia", "Consolas"
-MODEL_COLORS = {"Lineare Regression": "2A78D6", "Random Forest": "EB6834", "Gradient Boosting": "1BAF7A",
+MODEL_COLORS = {"Lineare Regression": "2A78D6", "Random Forest": "EB6834", "Gradient Boosting": "0B6B4A",
                 "Persistenz-Regel": "8C8B86", "SMA-Crossover": "B5B3AB", "Immer steigend": "6B6A66"}
 SHORT = {"Persistenz-Regel": "Persistenz", "SMA-Crossover": "SMA-Cross", "Immer steigend": "Immer ↑",
          "Lineare Regression": "Lin. Regr.", "Random Forest": "Random Forest", "Gradient Boosting": "Grad. Boosting"}
@@ -307,9 +307,9 @@ s = add(new_slide("I · DIE FRAGE", "Aufgabe & Leitfrage",
 tb(s, LM, 2.3, CW, 1.4, "*Können einfache Standardmodelle den Kurs der Google-Aktie vertrauenswürdig vorhersagen, also besser als eine simple Faustregel?*",
    24, SERIF, INK, line=1.05)
 tb(s, LM, 4.0, CW, 0.3, "„VERTRAUENSWÜRDIG“ HEISST IM TESTZEITRAUM:", 11, MONO, MUTED, spc=100)
-numbered(s, ["*besser* als die Persistenz-Regel (MAE und RMSE)",
-             "*R² größer als 0*, also besser als der Mittelwert",
-             "Trefferquote *signifikant über 50 %* (Binomialtest, p < 0,05)"], y=4.4, size=21, gap=0.75)
+numbered(s, ["*Weniger Fehler* als die Persistenz-Regel (die einfachste Faustregel)",
+             "*Besser als der Durchschnitt:* die Vorhersage trifft den Kurs genauer als „immer der Durchschnitt“ (R² größer als 0)",
+             "*Richtung öfter richtig* als ein Münzwurf: über 50 %, statistisch abgesichert"], y=4.3, size=19, gap=[0.65, 0.95, 0.7])
 
 # 4 Daten
 s = add(new_slide("I · DIE FRAGE", "Daten verstehen",
@@ -329,6 +329,48 @@ numbered(s, ["*Persistenz-Regel:* Kurs morgen = Kurs heute, Random Walk (Fama, 1
              "*SMA-Crossover:* SMA 10 über SMA 50 → steigend, sonst fallend",
              f"*Immer steigend:* Referenz für die Trefferquote – Aufwärtstage im Test: {de(info['up_share_test'], 1)} %"], size=24, gap=1.05)
 tb(s, LM, 5.9, CW, 0.4, "Alle Regeln werden auf denselben Testdaten und mit denselben Kennzahlen gemessen wie die Modelle.", 15, SERIF, MUTED, italic=True)
+
+# 5a-c Die drei Regeln im Detail
+tm = info["typical_move"]
+up = info["up_share_test"]
+
+
+def stat(slide, x, y, w, label, value, desc):
+    tb(slide, x, y, w, 0.3, label, 10, MONO, MUTED, spc=100)
+    tb(slide, x, y + 0.3, w, 0.8, value, 44, SERIF, INK, italic=True)
+    tb(slide, x, y + 1.15, w, 0.9, desc, 15, SERIF, INK, line=1.05)
+
+
+def rule_slide(title, notes, items, mae_desc, hit_value, hit_desc):
+    sl = add(new_slide("II · MESSLATTE & KANDIDATEN", title, notes=notes))
+    numbered(sl, items, x=LM, y=2.5, w=6.6, size=19, gap=1.5, label_w=0.6)
+    rule(sl, 8.4, 2.6, 4.0)
+    stat(sl, 8.4, 2.8, 4.0, "MAE IM TEST", f"{de(m(title_to_model[title], 'Test', 'MAE'))} $", mae_desc)
+    stat(sl, 8.4, 4.85, 4.0, "TREFFERQUOTE IM TEST", hit_value, hit_desc)
+
+
+title_to_model = {"Regel 1: Persistenz": "Persistenz-Regel", "Regel 2: SMA-Crossover": "SMA-Crossover", "Regel 3: Immer steigend": "Immer steigend"}
+rule_slide("Regel 1: Persistenz",
+           "Die einfachste Prognose überhaupt: nichts ändert sich. Ihr Fehler entspricht einem typischen Tagesausschlag des Kurses. Sie sagt keine Richtung voraus. (ca. 0:45)",
+           ["*Idee:* Der Kurs von morgen ist der Kurs von heute. Wir erwarten also keine Veränderung (0 $)",
+            "*Beispiel:* Heute 300 $ → Prognose für morgen: 300 $",
+            "*Warum bekannt:* Schwanken Kurse rein zufällig (Random Walk), ist das die beste einfache Prognose (Fama, 1970)"],
+           "So viel liegt die Regel im Schnitt daneben, das ist ein typischer Tagesausschlag des Kurses.",
+           "–", "Die Regel sagt keine Richtung (rauf oder runter) voraus, daher gibt es keine Trefferquote.")
+rule_slide("Regel 2: SMA-Crossover",
+           "Trendregel aus der Chartanalyse. Kurzer Durchschnitt über langem Durchschnitt heißt Aufwärtstrend. Die Größe der Bewegung ist nicht Teil der Regel. (ca. 0:45)",
+           ["*Idee:* Liegt der Durchschnittskurs der letzten 10 Tage über dem der letzten 50 Tage, zeigt der Trend nach oben: Prognose *steigt*, sonst *fällt*",
+            f"*Größe:* Wie stark sich der Kurs bewegt, sagt die Regel nicht. Wir nehmen die typische Tagesänderung aus dem Training ({de(tm)} $)",
+            "*Warum bekannt:* Das ist die Idee hinter dem „Golden Cross“ der Chartanalyse (üblich sind 50 und 200 Tage)"],
+           "So viel liegt die Regel im Schnitt daneben.",
+           f"{de(m('SMA-Crossover', 'Test', 'Trefferquote'), 1)} %", "An so vielen von 100 Tagen stimmt die Richtung (50 wären ein Münzwurf).")
+rule_slide("Regel 3: Immer steigend",
+           "Einfachste Richtungsprognose. Ihre Trefferquote ist genau der Anteil der Aufwärtstage im Testzeitraum. (ca. 0:45)",
+           [f"*Idee:* Wir sagen jeden Tag: Der Kurs steigt, und zwar um die typische Tagesänderung ({de(tm)} $)",
+            "*Zweck:* Die einfachste Richtungsprognose. Sie zeigt, an wie vielen Tagen der Kurs überhaupt gestiegen ist",
+            f"*Zum Einordnen:* Im Test stieg der Kurs nur an {de(up, 1)} % der Tage. Wer immer „steigt“ sagt, hat also {de(up, 1)} % Treffer"],
+           "So viel liegt die Regel im Schnitt daneben.",
+           f"{de(m('Immer steigend', 'Test', 'Trefferquote'), 1)} %", "An so vielen von 100 Tagen stimmt die Richtung. Entspricht dem Anteil der Aufwärtstage.")
 
 # 6 Modelle
 s = add(new_slide("II · MESSLATTE & KANDIDATEN", "Die Kandidaten: drei Modelle",
@@ -351,12 +393,13 @@ numbered(s, ["*Standard in scikit-learn:* jeder kann es nachbauen (Pedregosa et 
              "*Aufsteigende Komplexität:* linear → Wald → Boosting. So zeigt sich, ob mehr Komplexität hilft",
              "*Einfach & erklärbar:* passt zur Leitfrage – kein High-End-Modell nötig"], size=24, gap=1.15)
 
-# 8 Training
-s = add(new_slide("III · DER TEST", "Training ohne Blick in die Zukunft",
-                  notes="Chronologischer Split: die neuesten Daten sind der Test. Zehn Features, nur mit Information bis heute. Vier automatische Prüfungen (assert) fangen Data Leakage ab. (ca. 1:30)"))
-numbered(s, [f"*Chronologischer Split:* älteste 80 % Training ({info['train_rows']} Tage), neueste 20 % Test ({info['test_rows']} Tage)",
-             f"*{info['n_features']} Features:* Kurs, Volumen, Rendite, 3 Lags, SMA 10/50, Volatilität, RSI (Wilder, 1978)",
-             f"*{info['leakage_checks']} automatische Leakage-Prüfungen* per assert – alle bestanden"], size=23, gap=1.15)
+# 8 Training und Test
+s = add(new_slide("III · DER TEST", "So lernen und testen wir",
+                  notes="Training: daraus lernt das Modell. Test: neueste Tage, die das Modell nie gesehen hat. Dort vergleichen wir Vorhersage und Realität. Eingaben sind zehn Kennzahlen pro Tag. (ca. 1:00)"))
+numbered(s, [f"*Training:* die ältesten {info['train_rows']} Tage ({info['train_start']} – {info['train_end']}). Daraus lernt das Modell",
+             f"*Test:* die neuesten {info['test_rows']} Tage ({info['test_start']} – {info['test_end']}). Das Modell hat sie nie gesehen, wir vergleichen seine Vorhersage mit der Realität",
+             f"*Eingaben:* {info['n_features']} Kennzahlen pro Tag, u. a. Kurs, Handelsvolumen, letzte Kursänderungen, Durchschnitte, Schwankung und RSI (Wilder, 1978). Gesucht: die Kursänderung von morgen"],
+         size=21, gap=1.3)
 
 # 9-11 Prognose je Modell (gleiche y-Achse, daher vergleichbar)
 pers_mae = m("Persistenz-Regel", "Test", "MAE")
@@ -402,7 +445,7 @@ style_chart(ch)
 ch.has_title = False
 ch.has_legend = True
 ch.legend.position, ch.legend.include_in_layout = XL_LEGEND_POSITION.BOTTOM, False
-ch.legend.font.size = Pt(12)
+ch.legend.font.size = Pt(14)
 plot = ch.plots[0]
 plot.gap_width, plot.overlap = 60, -5
 plot.has_data_labels = True
@@ -415,16 +458,16 @@ for ser, col in zip(plot.series, ("B5B3AB", INK)):
 _axes(ch, None, None, None)
 fig_source(s, LM, 6.45, 7.4)
 gbt, gbs = m("Gradient Boosting", "Training", "R2"), m("Gradient Boosting", "Test", "R2")
-tb(s, 8.7, 2.55, 3.8, 3.6,
-   f"*Gradient Boosting:* R² {de(gbt)} im Training, {de(gbs)} im Test\n"
-   f"*Random Forest:* {de(m('Random Forest', 'Training', 'R2'))} → {de(m('Random Forest', 'Test', 'R2'))}\n"
-   "Gelernte Muster tragen nicht in den Testzeitraum",
-   17, SERIF, INK, line=1.05, space_after=14)
+tb(s, 8.7, 2.5, 3.9, 3.9,
+   "*R² einfach erklärt:* Es misst, ob das Modell besser vorhersagt als die Regel „jeden Tag der Durchschnitt“. 1 = perfekt, 0 = gleich gut, unter 0 = schlechter\n"
+   f"*Gradient Boosting:* {de(gbt)} im Training, {de(gbs)} im Test. *Random Forest:* {de(m('Random Forest', 'Training', 'R2'))} → {de(m('Random Forest', 'Test', 'R2'))}\n"
+   "*Overfitting:* Im Training merkt sich das Modell auch Zufälliges. Auf neuen Tagen gilt das nicht mehr",
+   15, SERIF, INK, line=1.05, space_after=11)
 
 # 11 Modellvergleich
 s = add(new_slide("IV · DIE ANTWORT", "Modellvergleich im Test",
                   notes="Links: mittlerer absoluter Fehler, kleiner ist besser. Die Persistenz-Regel ist schwer zu schlagen. Rechts: Trefferquote der Richtung, die Marke ist 50 Prozent. "
-                        "Kennzahlen: MAE, RMSE, R² und Trefferquote, Formeln unten. (ca. 1:30)"))
+                        "Beide Kennzahlen in einem Satz erklären: Dollar daneben, Richtung richtig. (ca. 1:30)"))
 order_mae = ["Persistenz-Regel", "SMA-Crossover", "Immer steigend", "Lineare Regression", "Random Forest", "Gradient Boosting"]
 fig_title(s, LM, 2.25, 5.7, "Abb. 6", "Mittlerer absoluter Fehler (MAE) in $, Test")
 native_bar(s, LM, 2.55, 5.7, 3.0, [SHORT[n] for n in order_mae], [m(n, "Test", "MAE") for n in order_mae],
@@ -435,10 +478,8 @@ fig_title(s, 6.9, 2.25, 5.55, "Abb. 7", "Trefferquote der Richtung in %, Test")
 native_bar(s, 6.9, 2.55, 5.55, 3.0, [SHORT[n] for n in order_hit], [m(n, "Test", "Trefferquote") for n in order_hit],
            [MODEL_COLORS[n] for n in order_hit], "0.0", vmin=0, vmax=60, major=10)
 fig_source(s, 6.9, 5.55, 5.55, SOURCE)
-rule(s, LM, 6.0, CW)
-tb(s, LM, 6.12, CW, 0.4,
-   "MAE = 1/n · Σ|y − ŷ|    RMSE = √(1/n · Σ(y − ŷ)²)    R² = 1 − SS_res / SS_tot    Trefferquote = Anteil richtiger Richtungen",
-   11, MONO, INK)
+tb(s, LM, 5.95, 5.7, 0.9, "*MAE:* So viele Dollar liegt die Vorhersage im Schnitt daneben. Kleiner ist besser. (Der RMSE misst dasselbe, bestraft große Ausreißer aber stärker.)", 13, SERIF, INK, line=1.0)
+tb(s, 6.9, 5.95, 5.55, 0.9, "*Trefferquote:* An wie viel Prozent der Tage stimmt die Richtung (steigt oder fällt)? 50 % wäre ein Münzwurf.", 13, SERIF, INK, line=1.0)
 
 # 12 Antwort
 s = add(new_slide("IV · DIE ANTWORT", "Die Antwort auf die Leitfrage",
@@ -462,7 +503,7 @@ tb(s, LM, 6.3, CW, 0.4, f"Im Test hängt keine Vorhersage mit der Realität zusa
 # 13 Reflexion
 s = add(new_slide("IV · DIE ANTWORT", "Kritische Reflexion",
                   notes="Was lief gut, wo sind die Grenzen, was würde ich ändern. Die Ursache der großen Fehler ist eine Hypothese, kein Beweis. (ca. 1:30)"))
-numbered(s, ["*Was lief gut:* durchgängiger Prozess, faire Messlatte, automatische Leakage-Prüfungen",
+numbered(s, ["*Was lief gut:* durchgängiger Prozess, faire Messlatte, klare Trennung von Training und Test",
              f"*Grenzen:* eine Aktie, {info['test_rows']} Testtage. Die Kurse im Test (bis {de(info['close_test_max'], 0)} $) liegen über dem Trainingsmaximum ({de(info['close_train_max'], 0)} $), "
              f"und die Tagesschwankung ist fast doppelt so hoch (Std. {de(info['target_std_test'], 1)} $ statt {de(info['target_std_train'], 1)} $). Bäume extrapolieren nicht: mögliche Ursache der großen Fehler",
              "*Verbesserungen:* stationäre Features (z. B. Abstand zum SMA), Walk-forward-Validierung, mehrere Aktien und Zeiträume"],
@@ -476,20 +517,6 @@ numbered(s, [("*Leitfrage:* Nein. Einfache Standardmodelle schlagen in diesem Au
              "*Passt zur Random-Walk-Hypothese* (Fama, 1970) – ist aber kein Beweis, sondern ein Test mit einer Aktie",
              "*Der Gewinn ist der Prozess:* sauber, nachvollziehbar und mit anderen Aktien und Modellen wiederholbar"],
          size=23, gap=1.2)
-
-# Backup: Training-Prognose nur für das beste Modell
-best = info["best_model"]
-s = add(new_slide("ANHANG", "Zusatz: Training, bestes Modell",
-                  notes="Backup: Die Aufgabe verlangt die Prognose auch für den Trainingszeitraum. Bestes Modell = kleinster RMSE im Test."))
-fig_title(s, LM, 2.35, 7.6, "Abb. 8", f"{best}: Prognose im Trainingszeitraum")
-picture(s, f"03_training_{best.lower().replace(' ', '_')}.png", LM, 2.75, 7.0)
-fig_source(s, LM, 6.45, 7.6)
-others = [n for n in MODELS if n != best]
-tb(s, 8.8, 2.6, 3.8, 3.8,
-   f"*Bestes Modell:* {best}, kleinster RMSE im Test ({de(m(best, 'Test', 'RMSE'))} $)\n"
-   f"*Korrelation* mit der Realität: {de(m(best, 'Training', 'Korrelation'))} im Training, {de(m(best, 'Test', 'Korrelation'))} im Test\n"
-   + "\n".join(f"*{n}:* {de(m(n, 'Training', 'Korrelation'))} im Training, {de(m(n, 'Test', 'Korrelation'))} im Test" for n in others),
-   16, SERIF, INK, line=1.05, space_after=12)
 
 # 16 Abbildungs- und Tabellenverzeichnis
 s = add(new_slide("ANHANG", "Abbildungs- und Tabellenverzeichnis", notes=""))

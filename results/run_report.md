@@ -1,6 +1,6 @@
 # Lauf-Protokoll GOOGL
 
-- Zeitpunkt: 2026-11-23 14:24
+- Zeitpunkt: 2026-11-23 15:14
 - Python 3.13.18, pandas 3.0.5, numpy 2.2.6, scikit-learn 1.9.0, yfinance 1.5.2
 - Befehl: `python src/main.py` (Einstellungen in `src/config.py`; `--refresh` ruft neue Daten ab)
 - Datenquelle dieses Laufs: Snapshot
@@ -12,7 +12,6 @@
 - Training: 562 Tage (2024-02-02 bis 2026-04-30)
 - Test: 141 Tage (2026-05-01 bis 2026-11-19)
 - Anteil Aufwärtstage im Testzeitraum: 46.8 %
-- Bestes Modell (kleinster RMSE im Test): Lineare Regression
 - Features: Close, Volume, Return_Today, Return_Lag_1, Return_Lag_2, Return_Lag_3, SMA_10, SMA_50, Volatility_20, RSI_14
 - Target: `Target` = Kursänderung in $ von heute auf morgen
 

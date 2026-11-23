@@ -17,6 +17,6 @@
   "target_std_test": 7.659965279921876,
   "n_features": 10,
   "leakage_checks": 4,
-  "best_model": "Lineare Regression",
+  "typical_move": 2.8592081036007686,
   "run_date": "23.11.2026"
 }

@@ -14,7 +14,7 @@ GRID = "#DEDCD5"
 COLORS = {
     "Lineare Regression": "#2a78d6",
     "Random Forest": "#eb6834",
-    "Gradient Boosting": "#1baf7a",
+    "Gradient Boosting": "#0b6b4a",
     "Persistenz-Regel": "#8C8B86",
     "SMA-Crossover": "#B5B3AB",
 }
