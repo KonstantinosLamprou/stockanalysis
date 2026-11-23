@@ -1,5 +1,5 @@
 import pandas as pd
-from pathlib import Path
+import config
 
 def clean_data(df: pd.DataFrame, ticker_symbol: str):
     if df.empty:
@@ -12,7 +12,7 @@ def clean_data(df: pd.DataFrame, ticker_symbol: str):
     df_clean = df[['Close', 'Volume']].copy().dropna()
 
 
-    data_dir = Path("../data/processed")
+    data_dir = config.PROCESSED_DIR
     data_dir.mkdir(parents=True, exist_ok=True)
 
     # Dateiname mit Ticker
@@ -24,7 +24,7 @@ def clean_data(df: pd.DataFrame, ticker_symbol: str):
 
     return df_clean
 
-def split_data(df: pd.DataFrame, split_ratio: float = 0.8):
+def split_data(df: pd.DataFrame, split_ratio: float = config.SPLIT_RATIO):
 
     # Split
     split_index = int(len(df) * split_ratio)
@@ -35,4 +35,4 @@ def split_data(df: pd.DataFrame, split_ratio: float = 0.8):
     print(f"Trainingsdaten: {len(train_data)} Zeilen")
     print(f"Testdaten: {len(test_data)} Zeilen")
     
-    return train_data, test_data
+    return train_data, test_data

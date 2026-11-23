@@ -1,0 +1,6 @@
+Modell,K1_schlaegt_Persistenz,K2_R2_ueber_0,K3_Treffer_signifikant,p_Wert_Treffer,vertrauenswuerdig
+Lineare Regression,False,False,False,0.8001,False
+Random Forest,False,False,False,0.8439,False
+Gradient Boosting,False,False,False,0.9354,False
+SMA-Crossover,False,False,False,0.7497,False
+Immer steigend,False,False,False,0.8001,False

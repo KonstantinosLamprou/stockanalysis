@@ -1,0 +1,21 @@
+{
+  "ticker": "GOOGL",
+  "period": "3y",
+  "raw_rows": 753,
+  "raw_start": "21.11.2023",
+  "raw_end": "20.11.2026",
+  "train_rows": 562,
+  "test_rows": 141,
+  "train_start": "02.02.2024",
+  "train_end": "30.04.2026",
+  "test_start": "01.05.2026",
+  "test_end": "19.11.2026",
+  "up_share_test": 46.808510638297875,
+  "close_train_max": 384.3232421875,
+  "close_test_max": 402.1211853027344,
+  "target_std_train": 4.1449312882473475,
+  "target_std_test": 7.659965279921876,
+  "n_features": 10,
+  "leakage_checks": 4,
+  "run_date": "23.11.2026"
+}

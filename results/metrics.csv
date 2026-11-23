@@ -1,0 +1,13 @@
+Modell,Zeitraum,MAE,RMSE,R2,Trefferquote,n
+Persistenz-Regel,Training,2.8592,4.1640,-0.0110,,562
+SMA-Crossover,Training,3.7049,4.8455,-0.3690,54.6263,562
+Immer steigend,Training,3.6498,4.7989,-0.3428,55.5160,562
+Lineare Regression,Training,2.8513,4.1298,0.0055,54.6263,562
+Random Forest,Training,2.5066,3.3784,0.3345,67.9715,562
+Gradient Boosting,Training,1.8575,2.4499,0.6500,79.1815,562
+Persistenz-Regel,Test,5.4163,7.6800,-0.0124,,141
+SMA-Crossover,Test,6.0151,8.1093,-0.1288,47.5177,141
+Immer steigend,Test,6.0479,8.4865,-0.2362,46.8085,141
+Lineare Regression,Test,5.5247,7.8235,-0.0506,46.8085,141
+Random Forest,Test,11.4676,13.5960,-2.1729,46.0993,141
+Gradient Boosting,Test,18.1783,20.6746,-6.3369,43.9716,141

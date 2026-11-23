@@ -1,9 +1,9 @@
 import pandas_ta as ta
 import pandas as pd
-from pathlib import Path
+import config
 
 
-def create_features(df: pd.DataFrame) -> pd.DataFrame:
+def create_features(df: pd.DataFrame, ticker_symbol: str = config.TICKER) -> pd.DataFrame:
     """
     Erstellt Finanz-Features für das Machine Learning Modell.
     """
@@ -38,11 +38,11 @@ def create_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # -----
     # Ordner automatisch erstellen (falls nicht vorhanden)
-    data_dir = Path("../data/featured")
+    data_dir = config.FEATURED_DIR
     data_dir.mkdir(parents=True, exist_ok=True)
     
     # Dateiname mit Ticker
-    filename = data_dir / f"GOOGL_featured_data.csv"
+    filename = data_dir / f"{ticker_symbol}_featured_data.csv"
     
     # Speichern
     df_features.to_csv(filename)
