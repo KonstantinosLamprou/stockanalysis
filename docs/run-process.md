@@ -17,7 +17,7 @@ pip install -r requirements.txt
 |---|---|
 | `python src/main.py` | Kompletter Lauf mit den **eingefrorenen Daten** (`results/snapshot/`). Ergebnisse sind bei jedem Lauf identisch. |
 | `python src/main.py --refresh` | Ruft die Kursdaten **neu bei Yahoo Finance** ab, überschreibt den Snapshot und rechnet alles neu. Die Zahlen ändern sich dann. |
-| `python presentation/build_deck.py` | Baut `presentation/Aktienanalyse_Praesentation.pptx` aus `results/`. |
+| `python presentation/build_deck.py` | Baut `presentation/Aktienanalyse_Praesentation.pptx` komplett neu aus `results/`. **Achtung:** überschreibt alle Änderungen, die von Hand in PowerPoint gemacht wurden. Seit der manuellen Bearbeitung ist die `.pptx` die maßgebliche Version. |
 | `python -m pytest tests` | Schnelle Tests für Regeln und Leakage-Prüfungen (ohne Internet). |
 
 Alle Skripte funktionieren von jedem Ordner aus, die Pfade kommen aus `src/config.py`.
