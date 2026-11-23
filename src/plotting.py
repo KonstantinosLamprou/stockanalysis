@@ -55,17 +55,16 @@ def plot_price_with_split(df, split_date, name="01_kurs_mit_split"):
     return _save(fig, name)
 
 
-def plot_predictions_vs_actual(dates, y_true, preds: dict, title, name, only=None):
-    """Echte Preisänderung gegen Vorhersage(n). preds: {Modellname: array}."""
+def plot_single_model(dates, y_true, pred, model, period, name, ylim=None):
+    """Ein Modell gegen die Realität (ein Zeitraum). ylim vereinheitlicht die Achse für Vergleichbarkeit."""
     fig, ax = plt.subplots(figsize=(8.4, 4.4))
     ax.plot(dates, y_true, color=INK, linewidth=1.0, alpha=0.55, label="Realität")
-    for label, p in preds.items():
-        if only and label not in only:
-            continue
-        ax.plot(dates, p, color=COLORS.get(label, "#2a78d6"), linewidth=1.7, label=label)
+    ax.plot(dates, pred, color=COLORS.get(model, "#2a78d6"), linewidth=1.8, label=model)
     ax.axhline(0, color=MUTED, linewidth=0.8)
-    _style(ax, title, "Preisänderung zum Folgetag in $")
-    leg = ax.legend(frameon=False, fontsize=10, loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=4)
+    if ylim:
+        ax.set_ylim(*ylim)
+    _style(ax, f"{model}: {period}", "Preisänderung zum Folgetag in $")
+    leg = ax.legend(frameon=False, fontsize=10, loc="lower right", bbox_to_anchor=(1.0, 1.0), ncol=2)
     for t in leg.get_texts():
         t.set_color(INK)
     fig.autofmt_xdate()

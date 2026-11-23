@@ -30,3 +30,8 @@ TARGET = "Target"      # Preisänderung in $ von heute auf morgen
 
 # Schwelle für Kriterium 3 ("Trefferquote besser als Münzwurf"): einseitiger Binomialtest
 ALPHA = 0.05
+
+# Welches Modell gilt als "bestes" (für den Zusatz-Plot im Training)?
+# None = automatisch das Modell mit dem kleinsten RMSE im Testzeitraum.
+# Alternativ ein Name: "Lineare Regression", "Random Forest" oder "Gradient Boosting".
+BEST_MODEL = None

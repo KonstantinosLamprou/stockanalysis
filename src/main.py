@@ -4,6 +4,8 @@
 import argparse
 import json
 import platform
+
+import numpy as np
 from datetime import datetime
 
 import pandas as pd
@@ -97,11 +99,16 @@ def main(refresh: bool = False):
     split_date = test_data.index.min()
     model_names = list(models)
     pl.plot_price_with_split(df_featured, split_date)
-    pl.plot_predictions_vs_actual(test_data.index, y_test.values, preds["test"],
-                                  "Testzeitraum", "02_prognose_test", only=model_names)
-    pl.plot_predictions_vs_actual(train_data.index, y_train.values, preds["train"],
-                                  "Trainingszeitraum", "03_prognose_training", only=model_names)
-    test_table = table[table["Zeitraum"] == "Test"]
+    # Einzelplots je Modell mit gemeinsamer y-Achse (vergleichbar), Test
+    all_vals = np.concatenate([y_test.values] + [preds["test"][n] for n in model_names])
+    ylim_test = (float(all_vals.min()) - 3, float(all_vals.max()) + 3)
+    for i, n in enumerate(model_names):
+        pl.plot_single_model(test_data.index, y_test.values, preds["test"][n], n, "Testzeitraum",
+                             f"02_test_{n.lower().replace(' ', '_')}", ylim=ylim_test)
+    # Bestes Modell: kleinster RMSE im Test (oder per config.BEST_MODEL festgelegt)
+    best = config.BEST_MODEL or min(model_names, key=lambda n: rows[(n, "Test")]["RMSE"])
+    pl.plot_single_model(train_data.index, y_train.values, preds["train"][best], best, "Trainingszeitraum",
+                         f"03_training_{best.lower().replace(' ', '_')}")
     pl.plot_metric_bars(table, "MAE", "Test: mittlerer absoluter Fehler (kleiner ist besser)", "MAE in $",
                         "04_vergleich_mae", reference=persistence_test["MAE"], ref_label="Persistenz-Regel")
     pl.plot_metric_bars(table, "R2", "Test: Bestimmtheitsmaß R² (über 0 ist besser als der Mittelwert)", "R²",
@@ -113,7 +120,7 @@ def main(refresh: bool = False):
                           "Training vs. Test: R² der Modelle", "R²", "07_train_vs_test_r2")
 
     # 9. Lauf-Protokoll
-    write_run_report(df, df_featured, train_data, test_data, passed_checks, table, criteria, up_share, data_source)
+    write_run_report(df, df_featured, train_data, test_data, passed_checks, table, criteria, up_share, data_source, best)
 
     # Kennzahlen zu den Daten für die Folien (build_deck.py liest nur results/, nicht data/)
     info = {
@@ -126,6 +133,7 @@ def main(refresh: bool = False):
         "close_train_max": float(train_data["Close"].max()), "close_test_max": float(test_data["Close"].max()),
         "target_std_train": float(y_train.std()), "target_std_test": float(y_test.std()),
         "n_features": len(features), "leakage_checks": len(passed_checks),
+        "best_model": best,
         "run_date": f"{datetime.now():%d.%m.%Y}",
     }
     (config.RESULTS_DIR / "run_info.json").write_text(json.dumps(info, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -144,7 +152,7 @@ def _md(df: pd.DataFrame) -> str:
     return "\n".join([head, sep, *body])
 
 
-def write_run_report(df_raw, df_featured, train, test, passed_checks, table, criteria, up_share, data_source=""):
+def write_run_report(df_raw, df_featured, train, test, passed_checks, table, criteria, up_share, data_source="", best=""):
     """Schreibt results/run_report.md: was wurde wann mit welchen Daten gerechnet."""
     import numpy, sklearn, yfinance
     lines = [
@@ -163,6 +171,7 @@ def write_run_report(df_raw, df_featured, train, test, passed_checks, table, cri
         f"- Training: {len(train)} Tage ({train.index.min():%Y-%m-%d} bis {train.index.max():%Y-%m-%d})",
         f"- Test: {len(test)} Tage ({test.index.min():%Y-%m-%d} bis {test.index.max():%Y-%m-%d})",
         f"- Anteil Aufwärtstage im Testzeitraum: {up_share:.1f} %",
+        f"- Bestes Modell (kleinster RMSE im Test): {best}",
         f"- Features: {', '.join(config.FEATURES)}",
         f"- Target: `{config.TARGET}` = Kursänderung in $ von heute auf morgen",
         "",

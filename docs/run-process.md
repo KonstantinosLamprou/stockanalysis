@@ -41,7 +41,8 @@ Alle Skripte funktionieren von jedem Ordner aus, die Pfade kommen aus `src/confi
    1. MAE und RMSE kleiner als bei der Persistenz-Regel
    2. R² größer als 0
    3. Trefferquote signifikant über 50 % (einseitiger Binomialtest, p < 0,05)
-9. **Speichern** nach `results/`: `metrics.csv`, `criteria.csv`, `predictions_test.csv`, `run_info.json`, `run_report.md`, `figures/*.png`.
+9. **Bestes Modell** = kleinster RMSE im Test (in `src/config.py` mit `BEST_MODEL` überschreibbar). Nur für dieses Modell entsteht der Zusatz-Plot im Trainingszeitraum.
+10. **Speichern** nach `results/`: `metrics.csv` (inkl. Korrelation zwischen Vorhersage und Realität), `criteria.csv`, `predictions_test.csv`, `run_info.json`, `run_report.md`, `figures/*.png` (je Modell ein Test-Plot mit gleicher y-Achse, `03_training_<bestes Modell>.png`).
 
 ## Ausgabeordner
 

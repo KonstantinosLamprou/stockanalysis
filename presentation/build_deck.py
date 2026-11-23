@@ -155,6 +155,7 @@ def numbered(slide, items, x=LM, y=2.55, w=None, size=24, gap=0.95, label_w=0.7)
 
 def fig_title(slide, x, y, w, label, title):
     """Überschrift über Abbildung/Tabelle: 'Abb. 1 Titel' bzw. 'Tab. 1 Titel' (IU-Zitierleitfaden 2.2.5)."""
+    REF[label] = (len(S), title)   # Folie = zuletzt hinzugefügte Folie
     tb(slide, x, y, w, 0.3, f"{label} {title}", 13, SERIF, INK)
 
 
@@ -270,6 +271,7 @@ def table(slide, x, y, w, rows, col_w, row_h=0.62, size=15, header_size=11):
 
 # ---------- Folien ----------
 S = []   # Liste (slide)
+REF = {}  # "Abb. 1" -> (Folie, Titel), wird von fig_title gefüllt
 
 
 def add(slide):
@@ -356,18 +358,35 @@ numbered(s, [f"*Chronologischer Split:* älteste 80 % Training ({info['train_row
              f"*{info['n_features']} Features:* Kurs, Volumen, Rendite, 3 Lags, SMA 10/50, Volatilität, RSI (Wilder, 1978)",
              f"*{info['leakage_checks']} automatische Leakage-Prüfungen* per assert – alle bestanden"], size=23, gap=1.15)
 
-# 9 Prognose
-rf_mean, gb_mean, real_mean = P["Random Forest"].mean(), P["Gradient Boosting"].mean(), P["Realität"].mean()
-s = add(new_slide("III · DER TEST", "Prognose: Realität gegen Modelle",
-                  notes="Grau: reale Tagesänderung. Die lineare Regression ist fast flach. Random Forest und Gradient Boosting prognostizieren über Monate Anstiege, die so nicht eintreten. (ca. 1:30)"))
-fig_title(s, LM, 2.35, 7.6, "Abb. 2", "Prognose und reale Kursänderung im Testzeitraum")
-picture(s, "02_prognose_test.png", LM, 2.75, 7.0)
-fig_source(s, LM, 6.45, 7.6)
-tb(s, 8.8, 2.6, 3.7, 3.6,
-   f"*Lineare Regression:* fast flach, sagt kaum Bewegung voraus\n"
-   f"*Random Forest & Gradient Boosting:* im Mittel {de(rf_mean, 1)} bzw. {de(gb_mean, 1)} $ pro Tag prognostiziert\n"
-   f"*Realität:* im Mittel {de(real_mean, 1)} $ pro Tag",
-   17, SERIF, INK, line=1.05, space_after=14)
+# 9-11 Prognose je Modell (gleiche y-Achse, daher vergleichbar)
+pers_mae = m("Persistenz-Regel", "Test", "MAE")
+real_std, real_mean = P["Realität"].std(), P["Realität"].mean()
+sg = lambda x, d=1: ("+" if x > 0 else "") + de(x, d)
+
+
+def model_bullets(n):
+    pm, ps = P[n].mean(), P[n].std()
+    mae, corr_te, corr_tr = m(n, "Test", "MAE"), m(n, "Test", "Korrelation"), m(n, "Training", "Korrelation")
+    if n == "Lineare Regression":
+        return [f"*Fast konstant:* im Mittel {sg(pm)} $ pro Tag, Streuung nur {de(ps, 1)} $ (Realität: {de(real_std, 1)} $)",
+                f"*MAE {de(mae)} $* – fast wie die Persistenz-Regel ({de(pers_mae)} $)",
+                f"*Korrelation {de(corr_te)}* mit der Realität: kein erkennbarer Zusammenhang",
+                "*Beste Kennzahlen, aber ohne Aussagekraft:* es wird kaum etwas vorhergesagt"]
+    return [f"*Prognostiziert Anstiege:* im Mittel {sg(pm)} $ pro Tag, real {sg(real_mean)} $",
+            f"*MAE {de(mae)} $* – {de(mae / pers_mae, 1)}-mal so hoch wie die Persistenz-Regel",
+            f"*Korrelation* mit der Realität: {de(corr_tr)} im Training, {de(corr_te)} im Test",
+            "*Muster aus dem Training tragen nicht in den Test*"]
+
+
+NOTES = {"Lineare Regression": "Grau: reale Tagesänderung. Die lineare Regression liegt fast auf der Nulllinie, sie sagt kaum etwas voraus. Deshalb sind ihre Kennzahlen am besten – sie ähnelt der Persistenz-Regel. (ca. 1:00)",
+         "Random Forest": "Gleiche Achse wie vorher. Der Random Forest prognostiziert über Monate Anstiege, die so nicht eintreten. Im Training hatte er Zusammenhang gelernt, im Test nicht. (ca. 1:00)",
+         "Gradient Boosting": "Gleiche Achse. Gradient Boosting prognostiziert die stärksten Anstiege und liegt entsprechend am weitesten daneben. Das ist Overfitting. (ca. 1:00)"}
+for i, n in enumerate(MODELS):
+    s = add(new_slide("III · DER TEST", f"Prognose: {n}", notes=NOTES[n]))
+    fig_title(s, LM, 2.35, 7.6, f"Abb. {i + 2}", f"{n}: Prognose und reale Kursänderung im Testzeitraum")
+    picture(s, f"02_test_{n.lower().replace(' ', '_')}.png", LM, 2.75, 7.0)
+    fig_source(s, LM, 6.45, 7.6)
+    tb(s, 8.8, 2.6, 3.8, 3.8, "\n".join(model_bullets(n)), 16, SERIF, INK, line=1.05, space_after=12)
 
 # 10 Training vs Test
 s = add(new_slide("III · DER TEST", "Training vs. Test: Overfitting",
@@ -376,7 +395,7 @@ cd = CategoryChartData()
 cd.categories = MODELS
 cd.add_series("Training", [m(n, "Training", "R2") for n in MODELS])
 cd.add_series("Test", [m(n, "Test", "R2") for n in MODELS])
-fig_title(s, LM, 2.3, 7.4, "Abb. 3", "Bestimmtheitsmaß R² im Training und im Test")
+fig_title(s, LM, 2.3, 7.4, "Abb. 5", "Bestimmtheitsmaß R² im Training und im Test")
 gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(LM), Inches(2.65), Inches(7.4), Inches(3.75), cd)
 ch = gf.chart
 style_chart(ch)
@@ -407,12 +426,12 @@ s = add(new_slide("IV · DIE ANTWORT", "Modellvergleich im Test",
                   notes="Links: mittlerer absoluter Fehler, kleiner ist besser. Die Persistenz-Regel ist schwer zu schlagen. Rechts: Trefferquote der Richtung, die Marke ist 50 Prozent. "
                         "Kennzahlen: MAE, RMSE, R² und Trefferquote, Formeln unten. (ca. 1:30)"))
 order_mae = ["Persistenz-Regel", "SMA-Crossover", "Immer steigend", "Lineare Regression", "Random Forest", "Gradient Boosting"]
-fig_title(s, LM, 2.25, 5.7, "Abb. 4", "Mittlerer absoluter Fehler (MAE) in $, Test")
+fig_title(s, LM, 2.25, 5.7, "Abb. 6", "Mittlerer absoluter Fehler (MAE) in $, Test")
 native_bar(s, LM, 2.55, 5.7, 3.0, [SHORT[n] for n in order_mae], [m(n, "Test", "MAE") for n in order_mae],
            [MODEL_COLORS[n] for n in order_mae], "0.0", vmin=0)
 fig_source(s, LM, 5.55, 5.7, SOURCE)
 order_hit = ["SMA-Crossover", "Immer steigend", "Lineare Regression", "Random Forest", "Gradient Boosting"]
-fig_title(s, 6.9, 2.25, 5.55, "Abb. 5", "Trefferquote der Richtung in %, Test")
+fig_title(s, 6.9, 2.25, 5.55, "Abb. 7", "Trefferquote der Richtung in %, Test")
 native_bar(s, 6.9, 2.55, 5.55, 3.0, [SHORT[n] for n in order_hit], [m(n, "Test", "Trefferquote") for n in order_hit],
            [MODEL_COLORS[n] for n in order_hit], "0.0", vmin=0, vmax=60, major=10)
 fig_source(s, 6.9, 5.55, 5.55, SOURCE)
@@ -431,12 +450,14 @@ for n in MODELS:
     rows.append([n, yn(c.K1_schlaegt_Persistenz), f"{yn(c.K2_R2_ueber_0)} ({de(m(n, 'Test', 'R2'))})",
                  f"{yn(c.K3_Treffer_signifikant)} (p = {de(c.p_Wert_Treffer)})", yn(c.vertrauenswuerdig)])
 fig_title(s, LM, 2.25, CW, "Tab. 1", "Prüfung der drei Kriterien im Testzeitraum")
-table(s, LM, 2.6, CW, rows, [3.0, 2.3, 2.0, 2.7, 2.53], row_h=0.62)
+table(s, LM, 2.6, CW, rows, [2.9, 2.1, 1.9, 2.6, 2.03], row_h=0.62)
 fig_source(s, LM, 5.15, CW)
 verdict = ("*Nein.* Kein Modell erfüllt eines der drei Kriterien." if n_crit == 0 else
            f"*Nein.* Die Modelle erfüllen nur {n_crit} von 9 Kriterien." if not any_trust else
            "*Teilweise.* Mindestens ein Modell erfüllt alle drei Kriterien.")
-tb(s, LM, 5.65, CW, 0.7, verdict, 30, SERIF, INK, italic=False)
+tb(s, LM, 5.6, CW, 0.7, verdict, 30, SERIF, INK, italic=False)
+corrs = [m(n, "Test", "Korrelation") for n in MODELS]
+tb(s, LM, 6.3, CW, 0.4, f"Im Test hängt keine Vorhersage mit der Realität zusammen (Korrelation {de(min(corrs))} bis {de(max(corrs))}).", 15, SERIF, MUTED, italic=True)
 
 # 13 Reflexion
 s = add(new_slide("IV · DIE ANTWORT", "Kritische Reflexion",
@@ -456,29 +477,30 @@ numbered(s, [("*Leitfrage:* Nein. Einfache Standardmodelle schlagen in diesem Au
              "*Der Gewinn ist der Prozess:* sauber, nachvollziehbar und mit anderen Aktien und Modellen wiederholbar"],
          size=23, gap=1.2)
 
-# 15 Backup Training-Prognose
-s = add(new_slide("ANHANG", "Zusatz: Prognose im Trainingszeitraum",
-                  notes="Backup: Die Aufgabe verlangt die Prognose auch für den Trainingszeitraum."))
-fig_title(s, LM, 2.35, 7.6, "Abb. 6", "Prognose und reale Kursänderung im Trainingszeitraum")
-picture(s, "03_prognose_training.png", LM, 2.75, 7.0)
+# Backup: Training-Prognose nur für das beste Modell
+best = info["best_model"]
+s = add(new_slide("ANHANG", "Zusatz: Training, bestes Modell",
+                  notes="Backup: Die Aufgabe verlangt die Prognose auch für den Trainingszeitraum. Bestes Modell = kleinster RMSE im Test."))
+fig_title(s, LM, 2.35, 7.6, "Abb. 8", f"{best}: Prognose im Trainingszeitraum")
+picture(s, f"03_training_{best.lower().replace(' ', '_')}.png", LM, 2.75, 7.0)
 fig_source(s, LM, 6.45, 7.6)
-tb(s, 8.8, 2.6, 3.7, 3, "Im Training liegen vor allem Random Forest und Gradient Boosting deutlich näher an der Realität als im Test.", 16, SERIF, INK, line=1.05)
+others = [n for n in MODELS if n != best]
+tb(s, 8.8, 2.6, 3.8, 3.8,
+   f"*Bestes Modell:* {best}, kleinster RMSE im Test ({de(m(best, 'Test', 'RMSE'))} $)\n"
+   f"*Korrelation* mit der Realität: {de(m(best, 'Training', 'Korrelation'))} im Training, {de(m(best, 'Test', 'Korrelation'))} im Test\n"
+   + "\n".join(f"*{n}:* {de(m(n, 'Training', 'Korrelation'))} im Training, {de(m(n, 'Test', 'Korrelation'))} im Test" for n in others),
+   16, SERIF, INK, line=1.05, space_after=12)
 
 # 16 Abbildungs- und Tabellenverzeichnis
 s = add(new_slide("ANHANG", "Abbildungs- und Tabellenverzeichnis", notes=""))
-figs = [("Abb. 1", "Schlusskurs GOOGL mit Train/Test-Split", 4),
-        ("Abb. 2", "Prognose und reale Kursänderung im Testzeitraum", 9),
-        ("Abb. 3", "Bestimmtheitsmaß R² im Training und im Test", 10),
-        ("Abb. 4", "Mittlerer absoluter Fehler (MAE) in $, Test", 11),
-        ("Abb. 5", "Trefferquote der Richtung in %, Test", 11),
-        ("Abb. 6", "Prognose und reale Kursänderung im Trainingszeitraum", 15),
-        ("Tab. 1", "Prüfung der drei Kriterien im Testzeitraum", 12)]
-for i, (nr, name, fol) in enumerate(figs):
-    yy = 2.35 + i * 0.58
-    tb(s, LM, yy + 0.06, 1.3, 0.3, nr, 14, SERIF, INK)
-    tb(s, LM + 1.3, yy + 0.02, 8.5, 0.5, name, 18, SERIF, INK)
-    tb(s, W - LM - 2, yy + 0.08, 2, 0.3, f"FOLIE {fol}", 11, MONO, MUTED, align=PP_ALIGN.RIGHT, spc=100)
-    rule(s, LM, yy + 0.5, CW)
+order = sorted(REF, key=lambda k: (k.startswith("Tab"), int(k.split()[1])))
+for i, key in enumerate(order):
+    fol, name = REF[key]
+    yy = 2.25 + i * 0.48
+    tb(s, LM, yy + 0.05, 1.3, 0.3, key, 13, SERIF, INK)
+    tb(s, LM + 1.3, yy + 0.02, 9.0, 0.4, name, 15, SERIF, INK)
+    tb(s, W - LM - 2, yy + 0.07, 2, 0.3, f"FOLIE {fol}", 11, MONO, MUTED, align=PP_ALIGN.RIGHT, spc=100)
+    rule(s, LM, yy + 0.42, CW)
 
 # 17 Literatur (IU-Zitierleitfaden: alphabetisch, hängender Einzug 1,27 cm, englische Titel in Sentence Case)
 s = add(new_slide("ANHANG", "Literaturverzeichnis", notes=""))

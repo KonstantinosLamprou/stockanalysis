@@ -21,6 +21,8 @@ def compute_metrics(y_true, y_pred) -> dict:
     y_true = np.asarray(y_true, dtype=float)
     y_pred = np.asarray(y_pred, dtype=float)
     has_direction = bool(np.any(y_pred != 0))
+    # Korrelation Vorhersage/Realität: zeigt, ob die Vorhersage überhaupt mit der Realität mitschwingt
+    corr = float(np.corrcoef(y_true, y_pred)[0, 1]) if np.std(y_pred) > 0 else float("nan")
     hits = int((np.sign(y_true) == np.sign(y_pred)).sum()) if has_direction else None
     return {
         "MAE": mean_absolute_error(y_true, y_pred),
@@ -28,6 +30,7 @@ def compute_metrics(y_true, y_pred) -> dict:
         "R2": r2_score(y_true, y_pred),
         "Trefferquote": hits / len(y_true) * 100 if has_direction else float("nan"),
         "Treffer": hits,
+        "Korrelation": corr,
         "n": len(y_true),
     }
 
@@ -73,5 +76,6 @@ def metrics_table(rows: dict) -> pd.DataFrame:
     out = []
     for (name, period), m in rows.items():
         out.append({"Modell": name, "Zeitraum": period, "MAE": m["MAE"], "RMSE": m["RMSE"],
-                    "R2": m["R2"], "Trefferquote": m["Trefferquote"], "n": m["n"]})
+                    "R2": m["R2"], "Trefferquote": m["Trefferquote"],
+                    "Korrelation": m["Korrelation"], "n": m["n"]})
     return pd.DataFrame(out)
