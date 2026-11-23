@@ -1,3 +1,5 @@
+Ist done: also outdated bitte nicht einlesen oder verwenden (alter stand)
+
 
 - data leakage hier auch noch dokumentieren mit screens 
 - clean_data neumachen 
