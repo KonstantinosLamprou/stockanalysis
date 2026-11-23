@@ -36,7 +36,7 @@ SHORT = {"Persistenz-Regel": "Persistenz", "SMA-Crossover": "SMA-Cross", "Immer 
          "Lineare Regression": "Lin. Regr.", "Random Forest": "Random Forest", "Gradient Boosting": "Grad. Boosting"}
 HEADER_RIGHT = "AKTIENANALYSE"
 FOOTER_LEFT = "IU INTERNATIONALE HOCHSCHULE"
-SOURCE = "Eigene Darstellung, Daten: Yahoo Finance (yfinance)"
+SOURCE = "Quelle: Eigene Darstellung auf der Basis von Yahoo Finance, n.d."   # Kurzbeleg laut IU-Zitierleitfaden
 
 W, H = 13.333, 7.5
 LM = 0.9          # linker Rand
@@ -74,7 +74,7 @@ slides_meta = []   # (Folie, Kapitel) – für Seitenzahlen
 
 
 def tb(slide, x, y, w, h, text, size=20, font=SERIF, color=INK, italic=False, bold=False,
-       align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, spc=None, line=None, space_after=0):
+       align=PP_ALIGN.LEFT, anchor=MSO_ANCHOR.TOP, spc=None, line=None, space_after=0, hanging=0):
     """Textfeld. In `text` schaltet ein Sternchen * Kursiv um; \\n beginnt einen neuen Absatz."""
     box = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = box.text_frame
@@ -87,6 +87,10 @@ def tb(slide, x, y, w, h, text, size=20, font=SERIF, color=INK, italic=False, bo
         if line:
             p.line_spacing = line
         p.space_after = Pt(space_after)
+        if hanging:   # hängender Einzug ab Zeile 2 (Literaturverzeichnis: 1,27 cm)
+            pPr = p._p.get_or_add_pPr()
+            pPr.set("marL", str(Inches(hanging)))
+            pPr.set("indent", str(-Inches(hanging)))
         ital = italic
         for seg in para.split("*"):
             if seg:
@@ -149,8 +153,14 @@ def numbered(slide, items, x=LM, y=2.55, w=None, size=24, gap=0.95, label_w=0.7)
         yy += gaps[i]
 
 
-def caption(slide, x, y, w, nr, extra=""):
-    tb(slide, x, y, w, 0.3, f"ABB. {nr} · {SOURCE}{extra}".upper(), 9, MONO, MUTED, spc=50)
+def fig_title(slide, x, y, w, label, title):
+    """Überschrift über Abbildung/Tabelle: 'Abb. 1 Titel' bzw. 'Tab. 1 Titel' (IU-Zitierleitfaden 2.2.5)."""
+    tb(slide, x, y, w, 0.3, f"{label} {title}", 13, SERIF, INK)
+
+
+def fig_source(slide, x, y, w, source=None):
+    """Quellenangabe unter Abbildung/Tabelle, beginnt mit 'Quelle:'."""
+    tb(slide, x, y, w, 0.3, source or SOURCE, 11, SERIF, MUTED)
 
 
 def picture(slide, name, x, y, w):
@@ -302,17 +312,18 @@ numbered(s, ["*besser* als die Persistenz-Regel (MAE und RMSE)",
 # 4 Daten
 s = add(new_slide("I · DIE FRAGE", "Daten verstehen",
                   notes="GOOGL = Alphabet. Daten per API von Yahoo Finance, keine manuelle Eingabe. Zu sehen: der Kursverlauf und die Trennung in Training (alt) und Test (neueste Daten). (ca. 1:00)"))
-numbered(s, [f"*GOOGL* (Alphabet), Yahoo Finance via yfinance",
+numbered(s, [f"*GOOGL* (Alphabet): Daten von Yahoo Finance (n.d.), abgerufen mit yfinance (Aroussi, n.d.)",
              f"*{info['raw_rows']} Handelstage*\n{info['raw_start']} – {info['raw_end']}",
-             "*Ziel:* Kursänderung von heute auf morgen in $"], x=LM, y=2.55, w=4.4, size=20, gap=1.3, label_w=0.6)
-picture(s, "01_kurs_mit_split.png", 5.6, 2.5, 6.85)
-caption(s, 5.6, 6.2, 6.85, 1)
+             "*Ziel:* Kursänderung von heute auf morgen in $"], x=LM, y=2.55, w=4.5, size=18, gap=[1.65, 1.2, 1.0], label_w=0.6)
+fig_title(s, 5.6, 2.45, 6.85, "Abb. 1", "Schlusskurs GOOGL mit Train/Test-Split")
+picture(s, "01_kurs_mit_split.png", 5.6, 2.85, 6.4)
+fig_source(s, 5.6, 6.25, 6.85)
 
 # 5 Baseline
 s = add(new_slide("II · MESSLATTE & KANDIDATEN", "Die Messlatte: drei Regeln",
                   notes="Ein Modell ist nur dann gut, wenn es eine einfache Regel schlägt. Die Persistenz-Regel ist der Standard in der Zeitreihenprognose und folgt aus der Random-Walk-Theorie (Fama, 1970). "
                         "Die Regeln werden auf denselben Testdaten mit denselben Kennzahlen gemessen. (ca. 1:15)"))
-numbered(s, ["*Persistenz-Regel:* Kurs morgen = Kurs heute (Random Walk, Fama, 1970)",
+numbered(s, ["*Persistenz-Regel:* Kurs morgen = Kurs heute, Random Walk (Fama, 1970)",
              "*SMA-Crossover:* SMA 10 über SMA 50 → steigend, sonst fallend",
              f"*Immer steigend:* Referenz für die Trefferquote – Aufwärtstage im Test: {de(info['up_share_test'], 1)} %"], size=24, gap=1.05)
 tb(s, LM, 5.9, CW, 0.4, "Alle Regeln werden auf denselben Testdaten und mit denselben Kennzahlen gemessen wie die Modelle.", 15, SERIF, MUTED, italic=True)
@@ -349,8 +360,9 @@ numbered(s, [f"*Chronologischer Split:* älteste 80 % Training ({info['train_row
 rf_mean, gb_mean, real_mean = P["Random Forest"].mean(), P["Gradient Boosting"].mean(), P["Realität"].mean()
 s = add(new_slide("III · DER TEST", "Prognose: Realität gegen Modelle",
                   notes="Grau: reale Tagesänderung. Die lineare Regression ist fast flach. Random Forest und Gradient Boosting prognostizieren über Monate Anstiege, die so nicht eintreten. (ca. 1:30)"))
-picture(s, "02_prognose_test.png", LM, 2.4, 7.6)
-caption(s, LM, 6.4, 7.6, 2)
+fig_title(s, LM, 2.35, 7.6, "Abb. 2", "Prognose und reale Kursänderung im Testzeitraum")
+picture(s, "02_prognose_test.png", LM, 2.75, 7.0)
+fig_source(s, LM, 6.45, 7.6)
 tb(s, 8.8, 2.6, 3.7, 3.6,
    f"*Lineare Regression:* fast flach, sagt kaum Bewegung voraus\n"
    f"*Random Forest & Gradient Boosting:* im Mittel {de(rf_mean, 1)} bzw. {de(gb_mean, 1)} $ pro Tag prognostiziert\n"
@@ -364,15 +376,11 @@ cd = CategoryChartData()
 cd.categories = MODELS
 cd.add_series("Training", [m(n, "Training", "R2") for n in MODELS])
 cd.add_series("Test", [m(n, "Test", "R2") for n in MODELS])
-gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(LM), Inches(2.4), Inches(7.4), Inches(4.0), cd)
+fig_title(s, LM, 2.3, 7.4, "Abb. 3", "Bestimmtheitsmaß R² im Training und im Test")
+gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Inches(LM), Inches(2.65), Inches(7.4), Inches(3.75), cd)
 ch = gf.chart
 style_chart(ch)
-ch.has_title = True
-ch.chart_title.text_frame.text = "Bestimmtheitsmaß R²"
-r = ch.chart_title.text_frame.paragraphs[0].runs[0]
-r.font.size, r.font.italic, r.font.name = Pt(14), True, SERIF
-r.font.color.rgb = rgb(INK)
-ch.chart_title.include_in_layout = False
+ch.has_title = False
 ch.has_legend = True
 ch.legend.position, ch.legend.include_in_layout = XL_LEGEND_POSITION.BOTTOM, False
 ch.legend.font.size = Pt(12)
@@ -386,7 +394,7 @@ for ser, col in zip(plot.series, ("B5B3AB", INK)):
     ser.format.fill.solid()
     ser.format.fill.fore_color.rgb = rgb(col)
 _axes(ch, None, None, None)
-caption(s, LM, 6.45, 7.4, 3, " (native PowerPoint-Grafik)")
+fig_source(s, LM, 6.45, 7.4)
 gbt, gbs = m("Gradient Boosting", "Training", "R2"), m("Gradient Boosting", "Test", "R2")
 tb(s, 8.7, 2.55, 3.8, 3.6,
    f"*Gradient Boosting:* R² {de(gbt)} im Training, {de(gbs)} im Test\n"
@@ -399,16 +407,19 @@ s = add(new_slide("IV · DIE ANTWORT", "Modellvergleich im Test",
                   notes="Links: mittlerer absoluter Fehler, kleiner ist besser. Die Persistenz-Regel ist schwer zu schlagen. Rechts: Trefferquote der Richtung, die Marke ist 50 Prozent. "
                         "Kennzahlen: MAE, RMSE, R² und Trefferquote, Formeln unten. (ca. 1:30)"))
 order_mae = ["Persistenz-Regel", "SMA-Crossover", "Immer steigend", "Lineare Regression", "Random Forest", "Gradient Boosting"]
-native_bar(s, LM, 2.3, 5.7, 3.5, [SHORT[n] for n in order_mae], [m(n, "Test", "MAE") for n in order_mae],
-           [MODEL_COLORS[n] for n in order_mae], "0.0", vmin=0, title="MAE in $ (kleiner ist besser)")
+fig_title(s, LM, 2.25, 5.7, "Abb. 4", "Mittlerer absoluter Fehler (MAE) in $, Test")
+native_bar(s, LM, 2.55, 5.7, 3.0, [SHORT[n] for n in order_mae], [m(n, "Test", "MAE") for n in order_mae],
+           [MODEL_COLORS[n] for n in order_mae], "0.0", vmin=0)
+fig_source(s, LM, 5.55, 5.7, SOURCE)
 order_hit = ["SMA-Crossover", "Immer steigend", "Lineare Regression", "Random Forest", "Gradient Boosting"]
-native_bar(s, 6.9, 2.3, 5.55, 3.5, [SHORT[n] for n in order_hit], [m(n, "Test", "Trefferquote") for n in order_hit],
-           [MODEL_COLORS[n] for n in order_hit], "0.0", vmin=0, vmax=60, major=10, title="Trefferquote in % (Münzwurf = 50 %)")
-rule(s, LM, 5.95, CW)
-tb(s, LM, 6.05, CW, 0.4,
+fig_title(s, 6.9, 2.25, 5.55, "Abb. 5", "Trefferquote der Richtung in %, Test")
+native_bar(s, 6.9, 2.55, 5.55, 3.0, [SHORT[n] for n in order_hit], [m(n, "Test", "Trefferquote") for n in order_hit],
+           [MODEL_COLORS[n] for n in order_hit], "0.0", vmin=0, vmax=60, major=10)
+fig_source(s, 6.9, 5.55, 5.55, SOURCE)
+rule(s, LM, 6.0, CW)
+tb(s, LM, 6.12, CW, 0.4,
    "MAE = 1/n · Σ|y − ŷ|    RMSE = √(1/n · Σ(y − ŷ)²)    R² = 1 − SS_res / SS_tot    Trefferquote = Anteil richtiger Richtungen",
    11, MONO, INK)
-tb(s, LM, 6.45, CW, 0.3, f"ABB. 4 · {SOURCE} · TESTZEITRAUM {info['test_start']} – {info['test_end']}".upper(), 9, MONO, MUTED, spc=50)
 
 # 12 Antwort
 s = add(new_slide("IV · DIE ANTWORT", "Die Antwort auf die Leitfrage",
@@ -419,11 +430,13 @@ for n in MODELS:
     c = C.loc[n]
     rows.append([n, yn(c.K1_schlaegt_Persistenz), f"{yn(c.K2_R2_ueber_0)} ({de(m(n, 'Test', 'R2'))})",
                  f"{yn(c.K3_Treffer_signifikant)} (p = {de(c.p_Wert_Treffer)})", yn(c.vertrauenswuerdig)])
-table(s, LM, 2.45, CW, rows, [3.0, 2.3, 2.0, 2.7, 2.53], row_h=0.7)
+fig_title(s, LM, 2.25, CW, "Tab. 1", "Prüfung der drei Kriterien im Testzeitraum")
+table(s, LM, 2.6, CW, rows, [3.0, 2.3, 2.0, 2.7, 2.53], row_h=0.62)
+fig_source(s, LM, 5.15, CW)
 verdict = ("*Nein.* Kein Modell erfüllt eines der drei Kriterien." if n_crit == 0 else
            f"*Nein.* Die Modelle erfüllen nur {n_crit} von 9 Kriterien." if not any_trust else
            "*Teilweise.* Mindestens ein Modell erfüllt alle drei Kriterien.")
-tb(s, LM, 5.7, CW, 0.7, verdict, 30, SERIF, INK, italic=False)
+tb(s, LM, 5.65, CW, 0.7, verdict, 30, SERIF, INK, italic=False)
 
 # 13 Reflexion
 s = add(new_slide("IV · DIE ANTWORT", "Kritische Reflexion",
@@ -446,34 +459,37 @@ numbered(s, [("*Leitfrage:* Nein. Einfache Standardmodelle schlagen in diesem Au
 # 15 Backup Training-Prognose
 s = add(new_slide("ANHANG", "Zusatz: Prognose im Trainingszeitraum",
                   notes="Backup: Die Aufgabe verlangt die Prognose auch für den Trainingszeitraum."))
-picture(s, "03_prognose_training.png", LM, 2.4, 7.6)
-caption(s, LM, 6.4, 7.6, 5)
+fig_title(s, LM, 2.35, 7.6, "Abb. 6", "Prognose und reale Kursänderung im Trainingszeitraum")
+picture(s, "03_prognose_training.png", LM, 2.75, 7.0)
+fig_source(s, LM, 6.45, 7.6)
 tb(s, 8.8, 2.6, 3.7, 3, "Im Training liegen vor allem Random Forest und Gradient Boosting deutlich näher an der Realität als im Test.", 16, SERIF, INK, line=1.05)
 
-# 16 Abbildungsverzeichnis
-s = add(new_slide("ANHANG", "Abbildungsverzeichnis", notes=""))
-figs = [("1", "Schlusskurs GOOGL mit Train/Test-Split", 4),
-        ("2", "Prognose gegen Realität, Testzeitraum", 9),
-        ("3", "Bestimmtheitsmaß R²: Training gegenüber Test", 10),
-        ("4", "Modellvergleich im Test: MAE und Trefferquote", 11),
-        ("5", "Prognose gegen Realität, Trainingszeitraum", 15)]
+# 16 Abbildungs- und Tabellenverzeichnis
+s = add(new_slide("ANHANG", "Abbildungs- und Tabellenverzeichnis", notes=""))
+figs = [("Abb. 1", "Schlusskurs GOOGL mit Train/Test-Split", 4),
+        ("Abb. 2", "Prognose und reale Kursänderung im Testzeitraum", 9),
+        ("Abb. 3", "Bestimmtheitsmaß R² im Training und im Test", 10),
+        ("Abb. 4", "Mittlerer absoluter Fehler (MAE) in $, Test", 11),
+        ("Abb. 5", "Trefferquote der Richtung in %, Test", 11),
+        ("Abb. 6", "Prognose und reale Kursänderung im Trainingszeitraum", 15),
+        ("Tab. 1", "Prüfung der drei Kriterien im Testzeitraum", 12)]
 for i, (nr, name, fol) in enumerate(figs):
-    yy = 2.5 + i * 0.7
-    tb(s, LM, yy + 0.06, 1.5, 0.3, f"ABB. {nr}", 11, MONO, MUTED, spc=100)
-    tb(s, LM + 1.5, yy, 8.0, 0.5, name, 20, SERIF, INK)
-    tb(s, W - LM - 2, yy + 0.06, 2, 0.3, f"FOLIE {fol}", 11, MONO, MUTED, align=PP_ALIGN.RIGHT, spc=100)
-    rule(s, LM, yy + 0.55, CW)
-tb(s, LM, 6.05, CW, 0.4, f"Alle Abbildungen: {SOURCE}, Abruf {info['run_date']}.", 14, SERIF, MUTED, italic=True)
+    yy = 2.35 + i * 0.58
+    tb(s, LM, yy + 0.06, 1.3, 0.3, nr, 14, SERIF, INK)
+    tb(s, LM + 1.3, yy + 0.02, 8.5, 0.5, name, 18, SERIF, INK)
+    tb(s, W - LM - 2, yy + 0.08, 2, 0.3, f"FOLIE {fol}", 11, MONO, MUTED, align=PP_ALIGN.RIGHT, spc=100)
+    rule(s, LM, yy + 0.5, CW)
 
-# 17 Literatur
+# 17 Literatur (IU-Zitierleitfaden: alphabetisch, hängender Einzug 1,27 cm, englische Titel in Sentence Case)
 s = add(new_slide("ANHANG", "Literaturverzeichnis", notes=""))
-lit = ["Breiman, L. (2001). Random Forests. *Machine Learning, 45*(1), 5–32.",
-       "Fama, E. F. (1970). Efficient capital markets: A review of theory and empirical work. *The Journal of Finance, 25*(2), 383–417.",
-       "Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. *The Annals of Statistics, 29*(5), 1189–1232.",
-       "Pedregosa, F. et al. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research, 12*, 2825–2830.",
-       "Wilder, J. W. (1978). *New concepts in technical trading systems.* Trend Research.",
-       "Aroussi, R. (o. J.). *yfinance* [Software]. https://github.com/ranaroussi/yfinance"]
-tb(s, LM, 2.45, CW, 4.2, "\n".join(lit), 16, SERIF, INK, line=1.05, space_after=9)
+lit = ["Aroussi, R. (n.d.). *yfinance* (Version 1.5.2) [Computer software]. https://github.com/ranaroussi/yfinance",
+       "Breiman, L. (2001). Random forests. *Machine Learning, 45*(1), 5–32. https://doi.org/10.1023/A:1010933404324",
+       "Fama, E. F. (1970). Efficient capital markets: A review of theory and empirical work. *The Journal of Finance, 25*(2), 383–417. https://doi.org/10.2307/2325486",
+       "Friedman, J. H. (2001). Greedy function approximation: A gradient boosting machine. *The Annals of Statistics, 29*(5), 1189–1232. https://doi.org/10.1214/aos/1013203451",
+       "Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M. & Duchesnay, É. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research, 12*, 2825–2830. https://jmlr.org/papers/v12/pedregosa11a.html",
+       "Wilder, J. W. (1978). *New concepts in technical trading systems*. Trend Research.",
+       "Yahoo Finance. (n.d.). *Alphabet Inc. (GOOGL): Historical data*. https://finance.yahoo.com/quote/GOOGL/history/"]
+tb(s, LM, 2.3, CW, 4.4, "\n".join(lit), 13, SERIF, INK, line=1.0, space_after=8, hanging=0.5)
 
 # ---------- Zusammensetzen: Seitenzahlen ----------
 total = len(S)
